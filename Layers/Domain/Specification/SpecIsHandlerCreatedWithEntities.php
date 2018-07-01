@@ -4,8 +4,6 @@ namespace Sfynx\CoreBundle\Layers\Domain\Specification;
 use Sfynx\SpecificationBundle\Specification\AbstractSpecification;
 use stdClass;
 
-use Sfynx\CoreBundle\Layers\Domain\Model\Interfaces\EntityInterface;
-
 /**
  * Class SpecIsHandlerCreatedWithEntities
  *
@@ -28,7 +26,7 @@ class SpecIsHandlerCreatedWithEntities extends AbstractSpecification
                 null === $object->handler->entities
                 || count($object->handler->entities) == 0
                 || (
-                    count($object->handler->entities) > 0 && $object->handler->entities[0] instanceof EntityInterface
+                    count($object->handler->entities) > 0 && is_object($object->handler->entities[0])
                 )
             );
     }

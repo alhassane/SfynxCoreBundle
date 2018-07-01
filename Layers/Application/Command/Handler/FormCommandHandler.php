@@ -2,10 +2,10 @@
 namespace Sfynx\CoreBundle\Layers\Application\Command\Handler;
 
 use Exception;
-use Sfynx\CoreBundle\Layers\Application\Command\Generalisation\Interfaces\CommandHandlerInterface;
+use Sfynx\CoreBundle\Layers\Application\Command\Handler\Generalisation\Interfaces\CommandHandlerInterface;
 use Sfynx\CoreBundle\Layers\Application\Command\Generalisation\Interfaces\CommandInterface;
-use Sfynx\CoreBundle\Layers\Application\Command\Generalisation\Interfaces\WorkflowCommandInterface;
-use Sfynx\CoreBundle\Layers\Domain\Model\Interfaces\EntityInterface;
+use Sfynx\CoreBundle\Layers\Application\Command\Workflow\Generalisation\Interfaces\CommandWorkflowInterface;
+
 use Sfynx\CoreBundle\Layers\Infrastructure\Exception\WorkflowException;
 
 /**
@@ -19,19 +19,19 @@ class FormCommandHandler implements CommandHandlerInterface
 {
     /** @var CommandInterface */
     public $command;
-    /** @var EntityInterface */
+    /** @var object */
     public $entity;
     /** @var array */
     public $errors = [];
     /** @var string */
     public $url = null;
-    /** @var WorkflowCommandInterface */
+    /** @var CommandWorkflowInterface */
     protected $workflowCommand;
 
     /**
-     * @param WorkflowCommandInterface $workflowCommand
+     * @param CommandWorkflowInterface $workflowCommand
      */
-    public function __construct(WorkflowCommandInterface $workflowCommand)
+    public function __construct(CommandWorkflowInterface $workflowCommand)
     {
         $this->workflowCommand = $workflowCommand;
     }
@@ -51,6 +51,10 @@ class FormCommandHandler implements CommandHandlerInterface
 
         if (property_exists($this->workflowCommand->getData(), 'entity')) {
             $this->entity = end($this->workflowCommand->getData()->entity);
+
+            if (!is_object($this->entity)) {
+                throw WorkflowException::noCreatedEntity();
+            }
         }
         if (property_exists($this->workflowCommand->getData(), 'url')) {
             $this->url = end($this->workflowCommand->getData()->url);
@@ -59,9 +63,6 @@ class FormCommandHandler implements CommandHandlerInterface
             $this->errors = $this->workflowCommand->getCommand()->errors;
         }
 
-        if (!($this->entity instanceof EntityInterface)) {
-            throw WorkflowException::noCreatedEntity();
-        }
         return $this;
     }
 }

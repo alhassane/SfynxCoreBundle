@@ -3,10 +3,10 @@ namespace Sfynx\CoreBundle\Layers\Application\Query\Handler;
 
 use Exception;
 use stdClass;
-use Sfynx\CoreBundle\Layers\Application\Query\Generalisation\Interfaces\QueryHandlerInterface;
+use Sfynx\CoreBundle\Layers\Application\Query\Handler\Generalisation\Interfaces\QueryHandlerInterface;
 use Sfynx\CoreBundle\Layers\Application\Query\Generalisation\Interfaces\QueryInterface;
-use Sfynx\CoreBundle\Layers\Application\Query\Generalisation\Interfaces\WorkflowQueryInterface;
-use Sfynx\CoreBundle\Layers\Domain\Model\Interfaces\EntityInterface;
+use Sfynx\CoreBundle\Layers\Application\Query\Workflow\Generalisation\Interfaces\QueryWorkflowInterface;
+
 use Sfynx\CoreBundle\Layers\Domain\Specification\SpecIsHandlerCreatedWithEntities;
 use Sfynx\CoreBundle\Layers\Infrastructure\Exception\WorkflowException;
 
@@ -28,13 +28,13 @@ class IndexQueryHandler implements QueryHandlerInterface
     /** @var  array */
     public $total;
     /** @var array */
-    /** @var WorkflowQueryInterface */
+    /** @var QueryWorkflowInterface */
     protected $workflowQuery;
 
     /**
-     * @param WorkflowQueryInterface $workflowQuery
+     * @param QueryWorkflowInterface $workflowQuery
      */
-    public function __construct(WorkflowQueryInterface $workflowQuery)
+    public function __construct(QueryWorkflowInterface $workflowQuery)
     {
         $this->workflowQuery = $workflowQuery;
     }
@@ -61,12 +61,12 @@ class IndexQueryHandler implements QueryHandlerInterface
         if (property_exists($this->workflowQuery->getData(), 'total')) {
             $this->total = end($this->workflowQuery->getData()->total);
         }
-        // we abort if we are not in the list of entities with EntityInterface
+        // we abort if we are not in the list of entities
         $object = new stdClass();
         $object->handler = $this;
         $specs = (new SpecIsHandlerCreatedWithEntities());
         if (!$specs->isSatisfiedBy($object)) {
-            throw WorkflowException::noEntityInterfaceInstances();
+            throw WorkflowException::noEntityInstances();
         }
         return $this;
     }

@@ -3,7 +3,7 @@ namespace Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Command;
 
 use Exception;
 use Symfony\Component\Form\Extension\Core\DataTransformer\ValueToDuplicatesTransformer;
-use Sfynx\CoreBundle\Layers\Domain\Model\Interfaces\EntityInterface;
+
 
 /**
  * Class TraitProcess
@@ -23,11 +23,10 @@ trait TraitProcess
     {
         $entity = $this->wfLastData->entity;
         try {
-            if ($entity instanceof EntityInterface) {
-                $entity = $this->manager->buildFromCommand($entity, $this->wfCommand);
+            if (is_object($entity)) {
                 $this->manager->getCommandRepository()->save($entity);
 
-                if ($this->updateCommand) {
+                if (property_exists($this, 'updateCommand') && true === $this->updateCommand) {
                     $this->wfCommand = $this->manager->buildFromEntity($this->wfCommand, $entity);
                 }
             }

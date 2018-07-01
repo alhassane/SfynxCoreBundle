@@ -6,7 +6,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Sfynx\CoreBundle\Layers\Domain\Service\Request\Generalisation\RequestInterface;
 use Sfynx\CoreBundle\Layers\Domain\Service\Response\Handler\ResponseHandler;
 use Sfynx\CoreBundle\Layers\Domain\Specification\SpecIsValidRequest;
-use Sfynx\CoreBundle\Layers\Domain\Specification\SpecIsCreatedWithBody;
 use Sfynx\CoreBundle\Layers\Domain\Specification\SpecIsXmlHttpRequest;
 use Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Interfaces\ObserverInterface;
 use Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Response\AbstractObserver;
@@ -36,7 +35,7 @@ abstract class AbstractCreateResponseHtml extends AbstractObserver
      * @param RequestInterface $request
      * @param array $headers
      */
-    public function __construct(RequestInterface $request, array $headers = ['Cache-Control' => 'no-cache'])
+    public function __construct(RequestInterface $request, array $headers = [])
     {
         $this->request = $request;
         $this->headers = $headers;
@@ -74,7 +73,6 @@ abstract class AbstractCreateResponseHtml extends AbstractObserver
         // we abort if we are not in the create form process
         $specs = (new SpecIsValidRequest())
             ->NotSpec(new SpecIsXmlHttpRequest())
-            ->AndSpec(new SpecIsCreatedWithBody())
             ;
         if (!$specs->isSatisfiedBy($this->object)) {
             return $this;

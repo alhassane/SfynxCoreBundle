@@ -2,6 +2,7 @@
 namespace Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Command;
 
 use stdClass;
+use Exception;
 use Sfynx\CoreBundle\Layers\Domain\Service\Manager\Generalisation\Interfaces\ManagerInterface;
 use Sfynx\CoreBundle\Layers\Domain\Service\Request\Generalisation\RequestInterface;
 use Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Interfaces\ObserverInterface;
@@ -40,13 +41,14 @@ abstract class AbstractEntityEditHandler extends AbstractObserver
      * @param RequestInterface $request
      * @param bool $updateCommand
      */
-    public function __construct(ManagerInterface $manager, RequestInterface $request, $updateCommand = false)
+    public function __construct(ManagerInterface $manager, RequestInterface $request, bool $updateCommand = false)
     {
         $this->entityName = $manager->getEntityName();
         $this->manager = $manager;
         $this->request = $request;
-        $this->object = new stdClass();
         $this->updateCommand = $updateCommand;
+
+        $this->object = new stdClass();
     }
 
     /**
@@ -54,7 +56,7 @@ abstract class AbstractEntityEditHandler extends AbstractObserver
      */
     protected function getValidMethods(): array
     {
-        return ['POST'];
+        return ['POST', 'PATCH', 'PUT'];
     }
 
     /**
@@ -65,7 +67,7 @@ abstract class AbstractEntityEditHandler extends AbstractObserver
     protected function onInit(): void
     {
         try {
-            $query = $this->manager->getQueryRepository()->findOneQueryByEntity($this->wfCommand->entityId)->getQuery();
+            $query = $this->manager->getQueryRepository()->findOneQueryByEntity($this->wfCommand->getEntityId())->getQuery();
             $this->wfLastData->entity = $this->manager->getQueryRepository()->Result($query)->getOneOrNullResult(\Doctrine\ORM\AbstractQuery::HYDRATE_OBJECT);
 
             $specs = new SpecIsValidRequest();
@@ -99,7 +101,7 @@ abstract class AbstractEntityEditHandler extends AbstractObserver
     protected function onContinue(): void
     {
         $entity = $this->wfLastData->entity;
-        $entity = $this->manager->buildFromCommand($entity, $this->wfCommand);
+        $entity = $this->manager->buildFromCommand($entity, $this->wfCommand, $this->updateCommand);
         $this->wfLastData->entity = $entity;
     }
 
@@ -117,7 +119,7 @@ abstract class AbstractEntityEditHandler extends AbstractObserver
     {
         $this->object->requestMethod = $this->request->getMethod();
         $this->object->validMethod = $this->getValidMethods();
-        $this->object->entityId = $this->wfCommand->entityId;
+        $this->object->entityId = $this->wfCommand->getEntityId();
         $this->object->errors = $this->wfCommand->errors;
     }
 

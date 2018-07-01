@@ -22,7 +22,7 @@ class SpecIsValidRequest extends AbstractSpecification
      */
     public function isSatisfiedBy(stdClass $object): bool
     {
-        return property_exists($object, 'requestMethod') && property_exists($object, 'validMethod') &&
+        return  property_exists($object, 'requestMethod') && property_exists($object, 'validMethod') &&
             array_search($object->requestMethod, $object->validMethod) !== false;
     }
 }

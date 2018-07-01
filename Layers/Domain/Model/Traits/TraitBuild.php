@@ -1,8 +1,9 @@
 <?php
 namespace Sfynx\CoreBundle\Layers\Domain\Model\Traits;
 
+use ReflectionClass;
 use ReflectionObject;
-use Sfynx\CoreBundle\Layers\Domain\Model\Interfaces\EntityInterface;
+
 use Sfynx\CoreBundle\Layers\Application\Command\Generalisation\Interfaces\CommandInterface;
 
 /**
@@ -18,49 +19,51 @@ trait TraitBuild
      * Build and return a new instance of entity from array
      * @param array $arr
      * @param array $excluded
-     * @return EntityInterface
+     * @return object
      */
-    final public static function newFromArray(array $arr, array $excluded = []): EntityInterface
+    final public static function newFromArray(array $arr, array $excluded = []): object
     {
-        $oVO = new static();
+        $oEntity = new static();
         foreach ($arr as $propertyName => $value) {
             if (!in_array($propertyName, $excluded)) {
-                $oVO->{$propertyName} = $value;
+                $oEntity->{$propertyName} = $value;
             }
         }
-        return $oVO;
+        return $oEntity;
     }
 
     /**
      * Build and return a new instance of entity from command
      * @param CommandInterface $command
      * @param array $excluded
-     * @return EntityInterface
+     * @param bool $updateCommand
+     * @return object
      */
-    final public static function newFromCommand(CommandInterface $command, array $excluded = []): EntityInterface
+    final public static function newFromCommand(CommandInterface $command, array $excluded = [], bool $updateCommand = false): object
     {
-        $oVO = new static();
-        foreach ($command as $propertyName => $value) {
-            if (!in_array($propertyName, $excluded)) {
-                $oVO->{$propertyName} = $value;
-            }
-        }
-        return $oVO;
+        return static::buildFromCommand(new static(), $command, $excluded, $updateCommand);
     }
 
     /**
      * Build and return an existed instance of entity from command
-     * @param EntityInterface $entity
+     * @param object $entity
      * @param CommandInterface $command
      * @param array $excluded
-     * @return EntityInterface
+     * @param bool $updateCommand
+     * @return object
      */
-    final public static function buildFromCommand( EntityInterface $entity, CommandInterface $command, array $excluded = []): EntityInterface
-    {
+    final public static function buildFromCommand(
+        object $entity,
+        CommandInterface $command,
+        array $excluded = [],
+        bool $updateCommand = false
+    ): object {
         foreach ((new ReflectionObject($command))->getProperties() as $oProperty) {
             $oProperty->setAccessible(true);
             $valueCommand = $oProperty->getValue($command);
-            if ('' !== $valueCommand && null !== $valueCommand) {
+            if ($updateCommand ||
+                (!$updateCommand && '' !== $valueCommand && null !== $valueCommand)
+            ) {
                 if (!in_array($oProperty->getName(), $excluded)) {
                     $entity->{$oProperty->getName()} = $oProperty->getValue($command);
                 }
@@ -71,12 +74,12 @@ trait TraitBuild
 
     /**
      * Build and return an existed instance of entity from array
-     * @param EntityInterface $entity
+     * @param object $entity
      * @param array $arr
      * @param array $excluded
-     * @return EntityInterface
+     * @return object
      */
-    final public static function buildFromArray( EntityInterface $entity, array $arr, array $excluded = []): EntityInterface
+    final public static function buildFromArray(object $entity, array $arr, array $excluded = []): object
     {
         foreach ($arr as $key => $value) {
             if (!in_array($key, $excluded)) {
@@ -90,16 +93,32 @@ trait TraitBuild
      * Returns a CommandInterface object representation of the given object, using all its properties.
      *
      * @param CommandInterface $command
-     * @param EntityInterface $entity
+     * @param object $entity
      * @param array $excluded
+     * @param array $match
      * @return CommandInterface
      */
-    public static function buildFromEntity(CommandInterface $command, EntityInterface $entity, array $excluded = []): CommandInterface
-    {
+    public static function buildFromEntity(
+        CommandInterface $command,
+        object $entity,
+        array $excluded = [],
+        array $match = []
+    ): CommandInterface {
         foreach ((new ReflectionObject($entity))->getProperties() as $oProperty) {
             $oProperty->setAccessible(true);
             if (!in_array($oProperty->getName(), $excluded)) {
-                $command->{$oProperty->getName()} = $oProperty->getValue($entity);
+                $value = $oProperty->getValue($entity);
+                $field = $oProperty->getName();
+
+                if (array_key_exists($field, $match)) {
+                    $field = $match[$field];
+                }
+
+                if (property_exists($command, $field)) {
+                    $reflectionProperty = (new ReflectionClass(get_class($command)))->getProperty($field);
+                    $reflectionProperty->setAccessible(true);
+                    $reflectionProperty->setValue($command, $value);
+                }
             }
         }
         return $command;

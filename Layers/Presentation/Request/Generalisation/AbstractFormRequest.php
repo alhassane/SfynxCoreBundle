@@ -10,7 +10,7 @@ use Sfynx\CoreBundle\Layers\Domain\Service\Request\Generalisation\RequestInterfa
 use Sfynx\CoreBundle\Layers\Domain\Specification\SpecIsValidRequest;
 
 /**
- * Class AbstractRequest
+ * Class AbstractFormRequest
  *
  * @category   Sfynx\CoreBundle\Layers
  * @package    Presentation
@@ -19,9 +19,9 @@ use Sfynx\CoreBundle\Layers\Domain\Specification\SpecIsValidRequest;
  */
 abstract class AbstractFormRequest implements CommandRequestInterface
 {
-    /** @var array  */
+    /** @var array */
     protected $defaults = [];
-    /** @var array  */
+    /** @var array */
     protected $required = [];
     /** @var array  */
     protected $allowedTypes = [];
@@ -31,6 +31,8 @@ abstract class AbstractFormRequest implements CommandRequestInterface
     protected $requestParameters;
     /** @var array */
     protected $options;
+    /** @var array */
+    protected $parameters;
     /** @var OptionsResolverInterface */
     protected $resolver;
     /** @var RequestInterface */
@@ -39,11 +41,14 @@ abstract class AbstractFormRequest implements CommandRequestInterface
     protected $object;
 
     /**
-     * @param ResolverInterface $resolver
+     * AbstractFormRequest constructor.
+     * @param RequestInterface $request
+     * @param array $parameters
      */
-    public function __construct(RequestInterface $request)
+    public function __construct(RequestInterface $request, array $parameters =[])
     {
         $this->request  = $request;
+        $this->parameters  = $parameters;
         $this->object = new stdClass();
         $this->resolver = new OptionsResolver();
 
@@ -94,13 +99,22 @@ abstract class AbstractFormRequest implements CommandRequestInterface
         return $this;
     }
 
-    protected function process()
+    /**
+     * @return void
+     */
+    protected function process(): void
     {
         $this->setOptions();
 
         $mt = $this->object->requestMethod;
         foreach (['defaults', 'required', 'allowedTypes', 'allowedValues'] as $attribut) {
             $this->$attribut = isset($this->$attribut[$mt]) ? $this->$attribut[$mt] : $this->$attribut;
+            if (isset($this->$attribut[$mt])
+                && is_string($this->$attribut[$mt])
+                && isset($this->$attribut[$this->$attribut[$mt]])
+            ) {
+                $this->$attribut[$mt] = $this->$attribut[$this->$attribut[$mt]];
+            }
         }
 
         $this->defaults['_token'] = null;

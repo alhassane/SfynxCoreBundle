@@ -2,10 +2,10 @@
 namespace Sfynx\CoreBundle\Layers\Application\Query\Handler;
 
 use Exception;
-use Sfynx\CoreBundle\Layers\Application\Query\Generalisation\Interfaces\QueryHandlerInterface;
+use Sfynx\CoreBundle\Layers\Application\Query\Handler\Generalisation\Interfaces\QueryHandlerInterface;
 use Sfynx\CoreBundle\Layers\Application\Query\Generalisation\Interfaces\QueryInterface;
-use Sfynx\CoreBundle\Layers\Application\Query\Generalisation\Interfaces\WorkflowQueryInterface;
-use Sfynx\CoreBundle\Layers\Domain\Model\Interfaces\EntityInterface;
+use Sfynx\CoreBundle\Layers\Application\Query\Workflow\Generalisation\Interfaces\QueryWorkflowInterface;
+
 use Sfynx\CoreBundle\Layers\Infrastructure\Exception\WorkflowException;
 
 /**
@@ -19,16 +19,16 @@ class ShowQueryHandler implements QueryHandlerInterface
 {
     /** @var QueryInterface */
     public $query;
-    /** @var EntityInterface */
+    /** @var object */
     public $entity;
     /** @var array */
-    /** @var WorkflowQueryInterface */
+    /** @var QueryWorkflowInterface */
     protected $workflowQuery;
 
     /**
-     * @param WorkflowQueryInterface $workflowQuery
+     * @param QueryWorkflowInterface $workflowQuery
      */
-    public function __construct(WorkflowQueryInterface $workflowQuery)
+    public function __construct(QueryWorkflowInterface $workflowQuery)
     {
         $this->workflowQuery = $workflowQuery;
     }
@@ -46,7 +46,7 @@ class ShowQueryHandler implements QueryHandlerInterface
         // get last version of entity and errors objects
         $this->query = $query;
         $this->entity = end($this->workflowQuery->getData()->entity);
-        if (!($this->entity instanceof EntityInterface)) {
+        if (!is_object($this->entity)) {
             throw WorkflowException::noCreatedEntity();
         }
         return $this;

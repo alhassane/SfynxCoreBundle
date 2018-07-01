@@ -3,6 +3,7 @@ namespace Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Response;
 
 use Exception;
 use Symfony\Component\Form\FormInterface as FormViewInterface;
+use Symfony\Component\HttpKernel\Kernel;
 use Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Response\AbstractCreateFormView;
 use Sfynx\CoreBundle\Layers\Infrastructure\Exception\WorkflowException;
 
@@ -36,6 +37,12 @@ class OBCreateEntityFormView extends AbstractCreateFormView
     protected function createForm(): FormViewInterface
     {
         $this->formType->initData($this->wfLastData->formViewData);
+
+        if ((Kernel::MAJOR_VERSION >= 3)
+            && (Kernel::MINOR_VERSION >= 3)
+        ) {
+            return $this->formFactory->create(get_class($this->formType), $this->wfHandler->entity);
+        }
         return $this->formFactory->create($this->formType, $this->wfHandler->entity);
     }
 }

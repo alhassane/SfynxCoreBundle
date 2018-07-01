@@ -27,14 +27,14 @@ class OBCreateResponseJson extends AbstractCreateResponseJson
      */
     public function process(): bool
     {
-        $return = true;
         try {
+            $url = !property_exists($this->wfHandler, 'url') ? null : $this->wfHandler->url;
             $this->wfLastData->response = (new ResponseHandler(SerializerStrategy::create(), $this->request->setRequestFormat('json')))
-                ->create($this->wfLastData->rows, Response::HTTP_OK, $this->headers)
+                ->create($this->wfLastData->rows, Response::HTTP_OK, $this->headers, $url)
                 ->getResponse();
         } catch (Exception $e) {
             throw ResponseException::noCreatedResponse();
         }
-        return $return;
+        return true;
     }
 }

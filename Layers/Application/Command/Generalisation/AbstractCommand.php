@@ -42,22 +42,29 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * @param $property
+     * @param $methodName
+     * @param null $params
      * @return mixed
      */
-    public function __get($property) {
-        if (property_exists($this, $property)) {
+    public function __call($methodName, $params = null)
+    {
+        $methodPrefix = substr($methodName, 0, 3);
+        $property = lcfirst(substr($methodName, 3));
+        if($methodPrefix == 'get' && property_exists($this, $property)) {
             return $this->$property;
         }
+        exit(sprintf("Opps! The method %s is not allowed!", $property));
     }
 
     /**
      * @param $property
-     * @param $value
+     * @return mixed
      */
-    public function __set($property, $value) {
-        if (property_exists($this, $property)) {
-            $this->$property = $value;
+    public function __get($property)
+    {
+        if(property_exists($this, $property)) {
+            return $this->$property;
         }
+        exit(sprintf("Opps! The method %s is not allowed!", $property));
     }
 }

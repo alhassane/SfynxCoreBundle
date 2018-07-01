@@ -2,6 +2,7 @@
 namespace Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Command;
 
 use stdClass;
+use Exception;
 use Sfynx\CoreBundle\Layers\Domain\Service\Manager\Generalisation\Interfaces\ManagerInterface;
 use Sfynx\CoreBundle\Layers\Domain\Service\Request\Generalisation\RequestInterface;
 use Sfynx\CoreBundle\Layers\Domain\Workflow\Observer\Generalisation\Interfaces\ObserverInterface;
@@ -31,17 +32,22 @@ abstract class AbstractEntityCreateHandler extends AbstractObserver
     protected $request;
     /** @var stdClass */
     protected $object;
+    /** @var bool */
+    protected $updateCommand;
 
     /**
      * AbstractEntityCreateHandler constructor.
      * @param ManagerInterface $manager
      * @param RequestInterface $request
+     * @param bool $updateCommand
      */
-    public function __construct(ManagerInterface $manager, RequestInterface $request)
+    public function __construct(ManagerInterface $manager, RequestInterface $request, bool $updateCommand = false)
     {
         $this->entityName = $manager->getEntityName();
         $this->manager = $manager;
         $this->request = $request;
+        $this->updateCommand = $updateCommand;
+
         $this->object = new stdClass();
     }
 
@@ -50,7 +56,7 @@ abstract class AbstractEntityCreateHandler extends AbstractObserver
      */
     protected function getValidMethods(): array
     {
-        return array('POST');
+        return ['POST'];
     }
 
     /**
@@ -62,6 +68,11 @@ abstract class AbstractEntityCreateHandler extends AbstractObserver
     {
         try {
             $this->wfLastData->entity = $this->manager->newFromCommand($this->wfCommand);
+
+            $specs = new SpecIsValidRequest();
+            if ($this->updateCommand && !$specs->isSatisfiedBy($this->object)) {
+                $this->wfCommand = $this->manager->buildFromEntity($this->wfCommand, $this->wfLastData->entity);
+            }
         } catch (Exception $e) {
             throw EntityException::NotBuildEntityFromCommand($this->entityName);
         }
@@ -97,7 +108,7 @@ abstract class AbstractEntityCreateHandler extends AbstractObserver
     {
         $this->object->requestMethod = $this->request->getMethod();
         $this->object->validMethod = $this->getValidMethods();
-        $this->object->entityId = $this->wfCommand->entityId;
+        $this->object->entityId = $this->wfCommand->getEntityId();
         $this->object->errors = $this->wfCommand->errors;
     }
 
